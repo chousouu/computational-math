@@ -132,7 +132,7 @@ def main():
     task_1a = LaplaceEquation(lambda x, y: x * y, 1/4, 1/4, x_bounds=(0, 1), y_bounds=(0, 1))
     matrix_1a = task_1a.diff_x() # matrix of inner nodes (here 6,7,8,11,12,13,16,17,18)
 
-    plt.spy(matrix_1a, markersize=5, marker='.', color='blue')
+    plt.spy(matrix_1a, marker='.', color='black')
     plt.title("Task 1 visualization.")
     plt.show()
 
