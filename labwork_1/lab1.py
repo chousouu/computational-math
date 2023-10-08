@@ -1,15 +1,11 @@
 import numpy as np 
 import matplotlib.pyplot as plt
 from scipy.linalg import lu_factor, lu_solve
+from typing import Callable
 import time 
-#TODO: think how to combine functions _diff vert and horiz()
 
-CONST_c = 0.1
 
 def _diff_matrix(matrix_size: tuple, axis: np.ndarray, step: float, border_value: float) -> tuple:
-    """
-    NOTE! returns +1 * d^2/dx^2
-    """
     row_num, col_num = matrix_size
     
     if col_num == 0 and axis[0] == 1:
@@ -49,7 +45,7 @@ def _diff_matrix(matrix_size: tuple, axis: np.ndarray, step: float, border_value
     return result_matrix, free_term_matrix
 
 
-def _prep_func(func, x, y):
+def _prep_func(func: Callable[[float, float], float], x: np.ndarray, y:np.ndarray):
     func_arr = []
     for x_i in x:
         for y_i in y:
@@ -57,22 +53,22 @@ def _prep_func(func, x, y):
     return np.array(func_arr)
 
 
-def _equation_ind(curr_pos, axis, max_pos):
+def _equation_ind(curr_pos: np.ndarray, axis: np.ndarray, max_pos: np.ndarray):
     #curr_pos / pos_max -- [row, col]
     return np.sum(axis * (curr_pos * max_pos[::-1] + curr_pos[::-1]))
 
 
-def _closest_elements_ind(curr_pos, axis, pos_max):
+def _closest_elements_ind(curr_pos: np.ndarray, axis: np.ndarray, max_pos: np.ndarray):
     if axis[0] == 1: #meaning vertical 
         curr_pos = curr_pos[::-1] # now [col, row]
-    max = np.sum(pos_max * axis) 
+    max = np.sum(max_pos * axis) 
 
     return [np.sum((curr_pos + (elem_pos * axis)) * [1, max]) for elem_pos in [-1, 0, 1]]
 
 
 class LaplaceEquation():
     def __init__(self, function, grid_x_step, grid_y_step, 
-                 x_bounds=(0, 1), y_bounds=(0, 1), border_value=0):
+                 x_bounds=(0, 1), y_bounds=(0, 1), border_value=0, c=0.1):
 
         x_start, x_end = x_bounds
         y_start, y_end = y_bounds
@@ -87,6 +83,8 @@ class LaplaceEquation():
         self.x_step = grid_x_step
         self.y_step = grid_y_step
         self.border_value = border_value
+        self.c = c
+
 
     def diff_x(self):
         axis = np.array([1, 0])
@@ -109,7 +107,7 @@ class LaplaceEquation():
     
     def get_equation_matrix(self):
         diag_u_matrix = np.eye(self.matrix_size[0] * self.matrix_size[1])
-        A = -self.diff_x() - self.diff_y() + CONST_c * diag_u_matrix
+        A = -self.diff_x() - self.diff_y() + self.c * diag_u_matrix
         return A
 
     def solve_equation(self):
@@ -120,6 +118,7 @@ class LaplaceEquation():
         nx, ny = np.meshgrid(self._x[1:-1], self._y[1:-1])
         solution = self.solve_equation()
         solution = np.reshape(solution, self.matrix_size)
+
         plt.pcolormesh(nx, ny, solution)
         plt.xlabel("x")
         plt.ylabel("y")
